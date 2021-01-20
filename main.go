@@ -24,6 +24,7 @@ func NewApp() App {
 	if err != nil {
 		log.Fatal(err)
 	}
+	app.db.AutoMigrate(&User{})
 	return app
 }
 
