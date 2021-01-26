@@ -15,13 +15,23 @@ func (app *App) HandleRegister() http.HandlerFunc {
 			res, _ := json.Marshal(map[string]interface{}{
 				"error": "not parsable request",
 			})
-
 			w.Write(res)
+			return
 		}
 		hash, _ := bcrypt.GenerateFromPassword([]byte(r.PostForm.Get("password")), bcrypt.DefaultCost)
 		hasher := md5.New()
 		hasher.Write(hash)
 		token := hex.EncodeToString(hasher.Sum(nil))
+		err = app.db.Where(&User{
+			Username: r.PostForm.Get("username"),
+		}).Error
+		if err != nil {
+			res, _ := json.Marshal(map[string]interface{}{
+				"error": "user already occupied",
+			})
+			w.Write(res)
+			return
+		}
 		err = app.db.Create(&User{
 			Username: r.PostForm.Get("username"),
 			Password: r.PostForm.Get("password"),
@@ -33,6 +43,7 @@ func (app *App) HandleRegister() http.HandlerFunc {
 				"error": "cannot insert to db",
 			})
 			w.Write(res)
+			return
 		}
 
 		res, _ := json.Marshal(map[string]interface{}{
@@ -51,6 +62,7 @@ func (app *App) HandleLogin() http.HandlerFunc {
 			})
 
 			w.Write(res)
+			return
 		}
 		var user User
 		err = app.db.Where(&User{
@@ -62,6 +74,7 @@ func (app *App) HandleLogin() http.HandlerFunc {
 				"error": "there is no such user.",
 			})
 			w.Write(res)
+			return
 		}
 		res, _ := json.Marshal(map[string]interface{}{
 			"token": user.Token,
