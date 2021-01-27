@@ -4,8 +4,9 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func (app *App) HandleRegister() http.HandlerFunc {
@@ -22,10 +23,11 @@ func (app *App) HandleRegister() http.HandlerFunc {
 		hasher := md5.New()
 		hasher.Write(hash)
 		token := hex.EncodeToString(hasher.Sum(nil))
+		var alreadyOccupied User
 		err = app.db.Where(&User{
 			Username: r.PostForm.Get("username"),
-		}).Error
-		if err != nil {
+		}).Take(&alreadyOccupied).Error
+		if err == nil {
 			res, _ := json.Marshal(map[string]interface{}{
 				"error": "user already occupied",
 			})
